@@ -1,0 +1,8 @@
+{
+  "name": "dragist",
+  "authors": [
+    "satchel spencer"
+  ],
+  "description": "drag and drop utility",
+  "main": "dragist.js"
+}
