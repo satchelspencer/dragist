@@ -47,22 +47,18 @@
 		return o;
 	}
 
-	$.fn.dragable = function(getDragEl){
+	$.fn.dragable = function(getDragEl, triggerDistance){
 		var el = this;
 		var dragging = false;
 		el.on('mousedown.dragist', function(e){
-			var toclone = el;
-			if(getDragEl){
-				toclone = getDragEl();
-				el.append(toclone);
-			}	
-			var clone = toclone.clone()
-				.width(toclone.width())
-				.height(toclone.height());
-			copyCSS(toclone, clone);
-
-			if(getDragEl) toclone.remove();
-
+			var clone;
+			if(getDragEl) clone = getDragEl();
+			else{
+				clone = el.clone()
+					.width(el.width())
+					.height(el.height());
+				clone.copyCSS(el);
+			}
 			clone.css({
 				position : 'absolute',
 				margin : 0,
@@ -78,16 +74,12 @@
 				'-khtml-user-select': 'none',  
 				'-moz-user-select': 'none',   
 				'-ms-user-select': 'none',   
-				'user-select': 'none',
-				'cursor' : 'none'
+				'user-select': 'none'
 			});
-
-			var hOffset = clone.height()/2;
-			var wOffset = clone.height()/2;
 			
 			$('body').on('mousemove.dragist', function(me){
 				var d = diff(e, me);
-				n = d.dist > 10;
+				n = d.dist > triggerDistance||10;
 				if(!dragging && n){
 					el.triggerHandler('dragstart');
 					el.css({pointerEvents : 'none'});
@@ -98,8 +90,8 @@
 				dragging = n;
 				if(dragging){
 					clone.css({
-						top : getDragEl?me.clientY-hOffset:me.clientY-e.offsetY,
-						left : getDragEl?me.clientX-wOffset:me.clientX-e.offsetX,
+						top : me.clientY-e.offsetY,
+						left : me.clientX-e.offsetX,
 						opacity : 0.7
 					});
 				}else clone.css({opacity : 0});
@@ -119,17 +111,16 @@
 					'-khtml-user-select': '',  
 					'-moz-user-select': '',   
 					'-ms-user-select': '',   
-					'user-select': '',
-					'cursor' : ''
+					'user-select': ''
 				});
 				if(dragging){
 					var res;
-					$(endev.target).trigger('drop', function(arg){
+					$(endev.target).trigger('drop', [function(arg){
 						if(!res){ //only take the first responder
-							el.trigger('dropped', arguments);
+							el.trigger('dropped', Array.prototype.slice.call(arguments, 0).concat(endev));
 							res = true;
 						}
-					});
+					}, endev]);
 					setTimeout(function(){
 						dragging = false;
 						if(!res) el.triggerHandler('dragcancel');
